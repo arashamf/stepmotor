@@ -44,4 +44,5 @@ encoder\main.o: ../Core/Inc/gpio.h
 encoder\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 encoder\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 encoder\main.o: ../Core/Inc/st7735.h
+encoder\main.o: ../Core/Inc/typedef.h
 encoder\main.o: ../Core/Inc/DefineFont.h

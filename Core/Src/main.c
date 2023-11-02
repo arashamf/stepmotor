@@ -28,6 +28,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "st7735.h"
+#include "typedef.h"
 #include "DefineFont.h"
 /* USER CODE END Includes */
 
@@ -38,6 +39,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+
+// счетчик времени дребезга
+
+
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,8 +56,22 @@
 
 /* USER CODE BEGIN PV */
 char LCD_buff[16];
-int32_t prevCounter = 0;
-int32_t currCounter = 0;
+__IO int32_t prevCounter = 0;
+__IO int32_t currCounter = 0;
+
+const uint8_t ROWS = 4; //число строк у нашей клавиатуры
+const uint8_t COLS = 3; //число столбцов у нашей клавиатуры
+
+uint32_t key_status = 0;
+
+struct KEY_MACHINE_t
+{
+	KEY_CODE_t 		key_code;
+	KEY_STATE_t 	key_state;
+} ;
+
+struct KEY_MACHINE_t KEY_MACHINE;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,6 +79,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void encoder_init(void);
 void loop(void);
+uint32_t scan_keys (void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -110,37 +132,28 @@ int main(void)
 	
 	DIR_DRIVE(BACKWARD);
 	DRIVE_ENABLE(OFF);
+	
+	KEY_MACHINE.key_code = NO_KEY;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {		
-	//	for (uint8_t count = 0; count < 100; count++)
 		{
-			loop();
-		//	HAL_Delay(5);
+			for (uint32_t count = 0; count < 0x6FFFF; count++)			
+			{
+				loop();
+				if ((key_status = scan_keys()) != NO_KEY)
+				{
+					snprintf(LCD_buff, sizeof(LCD_buff), "%x", key_status);
+					ClearLcdMemory();
+					LCD_ShowString(3, 10, LCD_buff);
+					LCD_Refresh();
+				}			
+			}
+			TOOGLE_LED_RED();
 		}
-		
-	/*	DRIVE_ENABLE(ON);
-		HAL_Delay(3);
-		DIR_DRIVE(FORWARD);
-		HAL_Delay(5);
-		for (uint8_t i = 0; i < 9; i++)
-		{
-			STEP(ON);
-			HAL_Delay(3);
-			STEP(OFF);
-			HAL_Delay(3);
-		}
-		STEP(ON);
-		DIR_DRIVE(BACKWARD);
-		HAL_Delay(3);
-		STEP(OFF);
-		//HAL_Delay(6);
-		DRIVE_ENABLE(OFF);*/
-		
-//		TOOGLE_LED_RED();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -193,51 +206,48 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//--------------------------------------------------------------------------------------------------------//
 void encoder_init(void) 
 {
     
   LL_TIM_SetCounter(TIM1, 32760); // начальное значение счетчика:
 	
-	/* Enable the encoder interface channels */
-	LL_TIM_CC_EnableChannel(TIM1,LL_TIM_CHANNEL_CH1);
+	LL_TIM_CC_EnableChannel(TIM1,LL_TIM_CHANNEL_CH1); //Enable the encoder interface channels 
 	LL_TIM_CC_EnableChannel(TIM1,LL_TIM_CHANNEL_CH2);
 
-  LL_TIM_EnableCounter(TIM1);     // не забываем включить таймер!
+  LL_TIM_EnableCounter(TIM1);     // включение таймера
 }
 
+//--------------------------------------------------------------------------------------------------------//
 void loop(void) 
 {
 	currCounter = LL_TIM_GetCounter(TIM1); //текущее показание энкодера
-	currCounter = 32767 - (((currCounter-1) & 0x0FFFF) / 2);
+	currCounter = (32767 - ((currCounter-1) & 0x0FFFF))/2; //деление на 2, чтобы считать щелчки (щелчок = 2 импульса)
 	int32_t need_step = 0;
-/*if(currCounter > 32768/2) 
-	{
-		// Преобразуем значения счетчика из: 32766, 32767, .., в значения: ... -2, -1, 0, 1, 2 ...
-		currCounter = currCounter - 32768;
-  }*/
-	
+	int32_t delta = 0;
 	
 	if(currCounter != prevCounter) 
 	{
-		int32_t delta = currCounter-prevCounter;
-    prevCounter = currCounter;
+		delta = (currCounter-prevCounter); //разница между текущим и предыдущим показанием энкодера
+    prevCounter = currCounter; //сохранение текущего показанаия энкодера
     // защита от дребезга контактов и переполнения счетчика (переполнение будет случаться очень редко)
-    if((delta > -10) && (delta < 10)) 
+   // if((delta > -20) && (delta < 20)) 
+		if (delta != 0)
 		{    
-			snprintf(LCD_buff, sizeof(LCD_buff), "%06d %03d", currCounter, delta);
+			/*snprintf(LCD_buff, sizeof(LCD_buff), "%06d %03d", currCounter, delta);
 			ClearLcdMemory();
 			LCD_ShowString(3, 10, LCD_buff);
-			LCD_Refresh();
-			prevCounter = currCounter;
+			LCD_Refresh();*/
 			if (delta < 0)
 			{
-				DRIVE_ENABLE(ON);
-				DIR_DRIVE(BACKWARD);
+				DRIVE_ENABLE(ON); //сигнал разрешения контроллеру
+				DIR_DRIVE(BACKWARD); //направление вращения
 				HAL_Delay(5);
-				need_step = 5*delta;
+				need_step = 5*delta; //количество шагов
+				
 				while (need_step < 0)
 				{
-					STEP(ON);
+					STEP(ON); 
 					HAL_Delay(3);
 					STEP(OFF);
 					HAL_Delay(3);
@@ -274,6 +284,151 @@ void loop(void)
 			}
 		}
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------//
+uint32_t scan_keys (void)
+{
+	static __IO uint8_t key_state = KEY_STATE_OFF; // начальное состояние кнопки - не нажата
+	static __IO uint16_t key_repeat_time_cnt; // счетчик времени повтора
+	static __IO uint8_t kscan_step = 0; // шаг (фаза) сканирования
+	
+	if(key_state == KEY_STATE_OFF) //если кнопка была отпущена - ожидание нажатия
+	{
+		if(LL_GPIO_IsInputPinSet(COL_0_GPIO_Port,  COL_0_Pin) == 1)	//если кнопка была нажата - получение кода нажатой кнопки
+		{
+			key_state =  KEY_STATE_ON; //установка режима - кнопка нажата
+			switch (kscan_step)
+			{
+				case 0:
+					KEY_MACHINE.key_code = KEY_s0_d0;
+					break;
+				case 1:
+					KEY_MACHINE.key_code = KEY_s1_d0;
+					break;
+				case 2:
+					KEY_MACHINE.key_code = KEY_s2_d0;
+					break;
+				case 3:
+					KEY_MACHINE.key_code = KEY_s3_d0;
+					break;
+				default:
+					break;
+			}
+		}
+		else
+		{
+			if (LL_GPIO_IsInputPinSet(COL_1_GPIO_Port, COL_1_Pin) == 1)
+			{
+				key_state =  KEY_STATE_ON;
+				switch (kscan_step)
+				{
+					case 0:
+						KEY_MACHINE.key_code =KEY_s0_d1;
+						break;
+					case 1:
+						KEY_MACHINE.key_code =KEY_s1_d1;
+						break;
+					case 2:
+						KEY_MACHINE.key_code =KEY_s2_d1;
+						break;
+					case 3:
+						KEY_MACHINE.key_code =KEY_s3_d1;
+						break;
+					default:
+						break;
+				}
+			}
+			else
+			{
+				if (LL_GPIO_IsInputPinSet(COL_2_GPIO_Port, COL_2_Pin) == 1)
+				{
+					key_state =  KEY_STATE_ON;
+					switch (kscan_step)
+					{
+						case 0:
+							KEY_MACHINE.key_code = KEY_s0_d2;
+							break;
+						case 1:
+							KEY_MACHINE.key_code = KEY_s1_d2;
+							break;
+						case 2:
+							KEY_MACHINE.key_code = KEY_s2_d2;
+							break;
+						case 3:
+							KEY_MACHINE.key_code = KEY_s3_d2;
+							break;
+						default:
+							break;
+					}
+				}
+			}
+		}
+	}
+	
+	if (key_state ==  KEY_STATE_ON)
+	{
+		key_state = KEY_STATE_BOUNCE; // состояние кнопки - дребезг
+		key_repeat_time_cnt = KEY_BOUNCE_TIME; // счетчик времени дребезга - устанавливаем
+	}
+
+	if(key_state == KEY_STATE_BOUNCE) // пропускаем интервал дребезга
+	{
+		if(key_repeat_time_cnt > 0)
+		{key_repeat_time_cnt--;} // счетчик времени дребезга - уменьшаем
+		
+		else // дребезг кончился
+		{
+			key_state = KEY_STATE_AUTOREPEAT; // кнопка нажата
+			key_repeat_time_cnt = KEY_AUTOREPEAT_TIME; // счетчик времени автоповтора - устанавливаем
+		}
+	}
+	if (key_state == KEY_STATE_AUTOREPEAT)
+	{
+		if(key_repeat_time_cnt)
+		{key_repeat_time_cnt--;} // уменьшаем счетчик автоповтора
+		
+		else
+		{
+			if(((LL_GPIO_IsInputPinSet(COL_0_GPIO_Port, COL_0_Pin)) || (LL_GPIO_IsInputPinSet(COL_1_GPIO_Port, COL_1_Pin)) || (LL_GPIO_IsInputPinSet(COL_2_GPIO_Port, COL_2_Pin))) == 0) // если кнопка отпущена
+			{
+				key_state = KEY_STATE_OFF; //возврат в начальное состояние ожидания нажатия кнопки
+				return KEY_MACHINE.key_code;
+			}			
+			else // кнопка продолжает удерживаться
+			{key_repeat_time_cnt = KEY_AUTOREPEAT_TIME;} // установим счетчик автоповтора
+		}
+	}
+	switch(kscan_step) // сканирование клавиатуры
+	{
+		case 0:
+			kscan_step = 1; // следующий шаг (фаза) сканирования
+			SCAN_ROW2(ON); // линия активирована
+			SCAN_ROW1(OFF); // линия не активирована
+			break;
+		
+		case 1:
+			kscan_step = 2; // шаг (фаза) сканирования
+			SCAN_ROW3(ON); // линия активирована
+			SCAN_ROW2(OFF); // линия не активирована
+			break;
+		
+		case 2:
+			kscan_step = 3; // шаг (фаза) сканирования
+			SCAN_ROW4(ON); // линия активирована
+			SCAN_ROW3(OFF); // линия не активирована
+			break;
+		
+		case 3:
+			kscan_step = 0; // шаг (фаза) сканирования
+			SCAN_ROW1(ON); // линия активирована
+			SCAN_ROW4(OFF); // линия не активирована
+			break;
+		
+		default:
+			break;
+	}
+	return NO_KEY;
 }
 /* USER CODE END 4 */
 

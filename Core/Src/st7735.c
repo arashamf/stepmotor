@@ -45,7 +45,7 @@ void ST7735_WaitLastData()
 //************************************************************************//
 void WriteCmd(uint8_t cmd) 
 {  
-	LCD_DC(0); //установка в ноль линию DC
+	LCD_DC(0); //сброс линии DC
 	lcd7735_sendbyte(cmd);
 //	ST7735_WaitLastData();
 }
@@ -53,7 +53,7 @@ void WriteCmd(uint8_t cmd)
 //************************************************************************//
 void WriteData(uint8_t data)
 {  
-	LCD_DC(1);//установка вывод DC в единицу т.к. передаем данные
+	LCD_DC(1);//установка вывод DC в единицу, т.к. передаем данные
 	lcd7735_sendbyte (data);
 //	ST7735_WaitLastData();
 }
@@ -160,8 +160,8 @@ void lcdInit(void)
   HAL_Delay(5);
 
 	Init_ILI9163V();	// Run LCD init sequence
-  lcdSetOrientation(0);
-  lcdFillRGB(WHITE);
+  lcdSetOrientation(0); //установка ориентации дисплея
+  lcdFillRGB(WHITE); //цвет фона дисплея
 }
 
 //************************************************************************//
