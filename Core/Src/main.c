@@ -50,7 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-char LCD_buff[16];
+char LCD_str_buffer[16];
 __IO int32_t prevCounter = 0;
 __IO int32_t currCounter = 0;
 
@@ -58,7 +58,8 @@ const uint8_t ROWS = 4; //число строк у нашей клавиатуры
 const uint8_t COLS = 3; //число столбцов у нашей клавиатуры
 
 uint32_t key_status = 0;
-
+uint32_t tmp_count = 0;
+	
 struct KEY_MACHINE_t
 {
 	KEY_CODE_t 		key_code;
@@ -119,8 +120,8 @@ int main(void)
 	
 	lcdInit();
 	ClearLcdMemory();
-	LCD_SetFont (Arial_22x23, black);
-	LCD_ShowString (5,0,"start...");
+	LCD_SetFont (Arial_15x17, black);
+	LCD_ShowString (3,0,"start...");
 	LCD_Refresh();
 	
 	LED_RED(OFF);
@@ -136,17 +137,18 @@ int main(void)
   while (1)
   {		
 		{
-			for (uint32_t count = 0; count < 0x6FFFF; count++)			
+			for (uint32_t count = 0; count < 0x4FFFF; count++)			
 			{
 				loop();
-				if ((key_status = scan_keys()) != NO_KEY)
+				if ((tmp_count = scan_keys()) != NO_KEY)
 				{
-					snprintf(LCD_buff, sizeof(LCD_buff), "%x", key_status);
-					ClearLcdMemory();
-					LCD_ShowString(3, 10, LCD_buff);
-					LCD_Refresh();
-				}			
+					key_status = tmp_count;
+				}	
 			}
+			snprintf(LCD_str_buffer, sizeof(LCD_str_buffer), "key=%x", key_status);
+			ClearLcdMemory();
+			LCD_ShowString(3, 10, LCD_str_buffer);
+			LCD_Refresh();
 			TOOGLE_LED_RED();
 		}
     /* USER CODE END WHILE */

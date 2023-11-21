@@ -8,8 +8,7 @@
 /* Private includes ----------------------------------------------------------*/
 #include "st7735.h"
 #include "spi.h"
-#include "stdio.h"
-#include "string.h"
+#include "Font.h"
 
 /* Private function prototypes  --------------------------------------------*/
 static void lcd7735_sendbyte(uint8_t data);
@@ -78,56 +77,56 @@ static void Init_ILI9163V(void)
 {
   //SPI1->CR1 |= SPI_CR1_SPE; //включение SPI модуля
     
-	WriteCmd(0x11);  //отключение спящего режима
+	WriteCmd(SLPOUT);  //отключение спящего режима
 	HAL_Delay(5);
 
 	
-	WriteCmd(0x26);  //выбор гамма-кривой для текущего отображения
+	WriteCmd(SGAMMASET);  //выбор гамма-кривой для текущего отображения
 	WriteData(0x04);
 
-	WriteCmd(0xB1);  //Set Frame Rate    
+	WriteCmd(FRMCTR1);  //Set Frame Rate    
 	WriteData(0x0b);
 	WriteData(0x14);
 
-	WriteCmd(0xC0);  //Power_Control 1     //Set VRH1[4:0] & VC[2:0] for VCI1 & GVDD
+	WriteCmd(PWCTR1);  //Power_Control 1     //Set VRH1[4:0] & VC[2:0] for VCI1 & GVDD
 	WriteData(0x08);
 	WriteData(0x05);
 
-	WriteCmd(0xC1);  //Power_Control 2     //Set BT[2:0] for AVDD & VCL & VGH & VGL
+	WriteCmd(PWCTR2);  //Power_Control 2     //Set BT[2:0] for AVDD & VCL & VGH & VGL
 	WriteData(0x02);
 
-	WriteCmd(0xC5);  //Power_Control 3    //Set VMH[6:0] & VML[6:0] for VOMH & VCOML
+	WriteCmd(VMCTR1);  //Power_Control 3    //Set VMH[6:0] & VML[6:0] for VOMH & VCOML
 	WriteData(0x44);
 	WriteData(0x48);
 
-	WriteCmd(0xC7);  // Set VMF        
+	WriteCmd(VMOFCTR);  // Set VMF        
 	WriteData(0xc2);
 
-	WriteCmd(0x3A);  // set color mode   Interface Pixel Format 
+	WriteCmd(COLMODE);  // set color mode   Interface Pixel Format 
 	WriteData(0x05); // 16-bit color
 
-	WriteCmd(0x2A);  //Set Column Address
+	WriteCmd(CASET);  //Set Column Address
 	WriteData(0x00); // XS [15..8]
 	WriteData(0x00); //XS [7..0]
 	WriteData(0x00); //XE [15..8]
 	WriteData(0x7F); //XE [7..0]
 
-	WriteCmd(0x2B);  //Set Page Address
+	WriteCmd(RASET);  //Set Page Address
 	WriteData(0x00); // YS [15..8]
 	WriteData(0x00);  //YS [7..0]
 	WriteData(0x00); //YE [15..8]
 	WriteData(0x9F); //YE [7..0]
 	
-	WriteCmd(0x36);	 // Memory Data Access Control   
+	WriteCmd(MADCTL);	 // Memory Data Access Control   
 	WriteData(0xC8);  //!
 
-	WriteCmd(0xB7);  // Source Driver Direction
+	WriteCmd(SOURCE);  // Source Driver Direction
 	WriteData(0x00);
 
-	WriteCmd(0xF2); //Enable Gamma bit
+	WriteCmd(GAMMABIT); //Enable Gamma bit
 	WriteData(0x01);
 	
-	WriteCmd(0xE0); //Positive Gamma Correction Setting
+	WriteCmd(GMCTRP1); //Positive Gamma Correction Setting
 	WriteData(0x3F);//p1
 	WriteData(0x25);//p2
 	WriteData(0x21);//p3
@@ -144,7 +143,7 @@ static void Init_ILI9163V(void)
 	WriteData(0x02);//p14
 	WriteData(0x00);//p15
 	
-	WriteCmd(0xE1); //Negative Gamma Correction Setting
+	WriteCmd(GMCTRN1); //Negative Gamma Correction Setting
 	WriteData(0x00);//p1
 	WriteData(0x1a);//p2
 	WriteData(0x1e);//p3
@@ -161,7 +160,7 @@ static void Init_ILI9163V(void)
 	WriteData(0x3d);//p14
 	WriteData(0x3F);//p15
 
-	WriteCmd(0x29); // Display On
+	WriteCmd(DISPON); // Display On
 }
 
 //************************************************************************//
@@ -170,17 +169,17 @@ static void lcdSetOrientation(uint8_t orientation)
   switch (orientation)
 	{
 		case 0:
-			WriteCmd(ST7735_MADCTL);  // Memory Data Access Control
+			WriteCmd(MADCTL);  // Memory Data Access Control
 			WriteData(0x60);         //горизонтальная ориентация 
 	    break;    
 		
 		case 1:
-			WriteCmd(ST7735_MADCTL);  // Memory Data Access Control
+			WriteCmd(MADCTL);  // Memory Data Access Control
 			WriteData(0xC0);          // вертикальная ориентация, зеркальная
 			break;
 		
 		case 2:
-			WriteCmd(ST7735_MADCTL);  // Memory Data Access Control
+			WriteCmd(MADCTL);  // Memory Data Access Control
 			WriteData(0x00);           // вертикальная ориентация
 			break;
 				
@@ -197,13 +196,13 @@ static void lcdFillRGB(uint16_t color)
 	
 	color2=color >> 8;
   st7735SetAddrWindow(0, 0, lcdGetWidth() - 1, lcdGetHeight() - 1);
-  WriteCmd(ST7735_RAMWR);  // write to RAM
+  WriteCmd(RAMWR);  // write to RAM
   for (x=0; x < ST7735_PANEL_WIDTH*ST7735_PANEL_HEIGHT; x++) 
 	{
 		WriteData(color2);    
 		WriteData(color);    
   }
-  WriteCmd(ST7735_NOP);
+  WriteCmd(NOP);
 }
 
 //************************************************************************//
@@ -258,13 +257,13 @@ void ClearLcdMemory(void)
 //************************************************************************//
 void st7735SetAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
 {
-  WriteCmd(ST7735_CASET);   // column addr set
+  WriteCmd(CASET);   // column addr set
   WriteData(0x00);
   WriteData(x0);          // XSTART
   WriteData(0x00);
   WriteData(x1);          // XEND
 
-  WriteCmd(ST7735_RASET);   // row addr set
+  WriteCmd(RASET);   // row addr set
   WriteData(0x00);
   WriteData(y0);          // YSTART
   WriteData(0x00);
@@ -285,7 +284,7 @@ void LCD_Refresh(void)
 	int x, y;
 	
   st7735SetAddrWindow(0, 0, lcdGetWidth() - 1, lcdGetHeight() - 1);
-  WriteCmd(ST7735_RAMWR);  // write to RAM
+  WriteCmd(RAMWR);  // write to RAM
 	
   for (x=0; x < (ST7735_PANEL_WIDTH*ST7735_PANEL_HEIGHT); x++) 
 	{
@@ -293,7 +292,7 @@ void LCD_Refresh(void)
 		WriteData(y >> 8);    
 		WriteData(y);     
   }
-  WriteCmd(ST7735_NOP);
+  WriteCmd(NOP);
 }
 
 //************************************************************************//
@@ -451,13 +450,13 @@ void LCD_DrawBMP(const char* buf, int x0, int y0, int w, int h)
 	int x, y;
 	
   st7735SetAddrWindow(x0+0, y0+0, x0+w-1, y0+h-1);
-  WriteCmd(ST7735_RAMWR);  // write to RAM
+  WriteCmd(RAMWR);  // write to RAM
   for (x=0; x < (w*h*2); x++) 
 	{
 		y =  buf[x]; 
     WriteData(y);     
   }
-  WriteCmd(ST7735_NOP);
+  WriteCmd(NOP);
 }
 
 

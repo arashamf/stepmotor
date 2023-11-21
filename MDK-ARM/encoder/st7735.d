@@ -39,5 +39,4 @@ encoder\st7735.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_tim.h
 encoder\st7735.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_usart.h
 encoder\st7735.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_ll_gpio.h
 encoder\st7735.o: ../Core/Inc/spi.h
-encoder\st7735.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
-encoder\st7735.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+encoder\st7735.o: ../Core/Inc/Font.h

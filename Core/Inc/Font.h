@@ -262,3 +262,6 @@
 #define	XXXXXXX_	0xfe
 #define	XXXXXXXX	0xff
 
+extern const unsigned char Arial_15x17[224*34];
+extern const unsigned char Arial_22x23[224*69];	  	
+
