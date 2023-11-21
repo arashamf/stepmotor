@@ -29,7 +29,7 @@
 #include "string.h"
 #include "st7735.h"
 #include "typedef.h"
-#include "DefineFont.h"
+#include "Font.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,11 +39,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
-
-// счетчик времени дребезга
-
-
 
 /* USER CODE END PD */
 
@@ -124,8 +119,8 @@ int main(void)
 	
 	lcdInit();
 	ClearLcdMemory();
-	LCD_SetFont(Arial_15x17,black);
-	LCD_ShowString(5,0,"start...");
+	LCD_SetFont (Arial_22x23, black);
+	LCD_ShowString (5,0,"start...");
 	LCD_Refresh();
 	
 	LED_RED(OFF);
@@ -385,8 +380,8 @@ uint32_t scan_keys (void)
 	}
 	if (key_state == KEY_STATE_AUTOREPEAT)
 	{
-		if(key_repeat_time_cnt)
-		{key_repeat_time_cnt--;} // уменьшаем счетчик автоповтора
+		if(key_repeat_time_cnt > 0)
+			{key_repeat_time_cnt--;} // уменьшаем счетчик автоповтора
 		
 		else
 		{
@@ -396,7 +391,7 @@ uint32_t scan_keys (void)
 				return KEY_MACHINE.key_code;
 			}			
 			else // кнопка продолжает удерживаться
-			{key_repeat_time_cnt = KEY_AUTOREPEAT_TIME;} // установим счетчик автоповтора
+				{key_repeat_time_cnt = KEY_AUTOREPEAT_TIME;} // установим счетчик автоповтора
 		}
 	}
 	switch(kscan_step) // сканирование клавиатуры

@@ -10,89 +10,47 @@
 /* Private includes ----------------------------------------------------------*/
 #include "main.h" 
 
-/* Private function prototypes -----------------------------------------------*/
-void lcd7735_sendbyte(unsigned char data);
-void lcd7735_send2byte(uint8_t msb, uint8_t lsb);
-void WriteCmd(unsigned char cmd);
-void WriteData(unsigned char data);
-void st7735SetAddrWindow(unsigned char x0, unsigned char y0, unsigned char x1, unsigned char y1);
+/* Function prototypes ------------------------------------------------------*/
 void lcdInit(void);
-unsigned short lcdGetWidth(void);
-unsigned short lcdGetHeight(void);
-void lcdFillRGB(unsigned short color);
-
-unsigned int LCD_FastShowChar(unsigned int x,unsigned int y,unsigned char num);
-void LCD_ShowString(unsigned short x,unsigned short y, char *p);
-void LCD_SetFont(const unsigned char * font, unsigned int color);
-void LCD_Refresh(void);
-unsigned short FindColor (unsigned char color);
-void lcdSetOrientation(unsigned char orientation);
 void ClearLcdMemory(void);
-
-void LcdDrawRectangle(unsigned short x0,unsigned short x1,unsigned short y0,unsigned short y1,unsigned short color);
-void LcdDrawGraphSimple(unsigned int *buf, unsigned int color);
-void LcdDrawGraph(unsigned int *bufLow,unsigned int *bufMiddle, unsigned int *bufHigh);
-void LcdDrawUvGraph(unsigned int Low,unsigned int Middle, unsigned int High);
-void LcdDrawASGraph(unsigned int left,unsigned int right);
-void LcdDrawMgGraph(int *buf, int low, int high);
-void LCD_ShowStringCentered(unsigned short y, char *p);
-void LcdDenomResult(void);
-void lcdDrawHLine(unsigned short x0, unsigned short x1, unsigned short y, unsigned short color);
-void lcdDrawVLine(unsigned short x, unsigned short y0, unsigned short y1, unsigned short color);
-void LCD_ShowStringSize(unsigned short x,unsigned short y, char *p,unsigned int size);
-void ShowNotAllowNote (void);
-void LCD_ShowCashBagDistance(int distance);
-
+void st7735SetAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
+void lcdDrawPixel(uint16_t x, uint16_t y, uint16_t color);
+void LCD_Refresh(void);
+void LCD_SetFont(const uint8_t * font, uint32_t color);
+uint32_t LCD_FastShowChar(uint32_t x, uint32_t y, uint8_t num);
+uint32_t LCD_GetCharWidth(uint32_t y, uint8_t num);
+void LCD_ShowString(uint16_t x, uint16_t y, char *p);
+void LCD_ShowStringSize(uint16_t x, uint16_t y, char *p, uint32_t size);
 void LCD_DrawBMP(const char* buf, int x0, int y0, int w, int h);
-void LCD_CalibrateWhiteSheet(void);
-void LCD_CalibrateBlackSheet(void);	
-void LCD_CalibrateYellowSheet(void);	
-void LCD_ShowJam(void);
+void lcdDrawHLine(uint16_t x0, uint16_t x1, uint16_t y, uint16_t color);
+void lcdDrawVLine(uint16_t x, uint16_t y0, uint16_t y1, uint16_t color);
+void LcdDrawRectangle(uint16_t x0,uint16_t x1,uint16_t y0,uint16_t y1,uint16_t color);
+void LcdDrawGraphSimple(uint32_t *buf, uint32_t color);
+void LcdDrawGraph(uint32_t *bufLow, uint32_t *bufMiddle, uint32_t *bufHigh);
+void LcdDrawUvGraph(uint32_t Low,uint32_t Middle, uint32_t High);
+void LcdDrawASGraph(uint32_t left,uint32_t right);
+void LcdDrawMgGraph(int *buf, int low, int high);
 
-
-/**************************************************************************
-    ST7735 CONNECTOR - HY-1.8
-    -----------------------------------------------------------------------
-    Pin   Function        Notes
-    ===   ==============  ===============================
-      1   GND
-      2   VCC             3.3V
-      3   NC
-      4   NC
-      5   NC
-      6   RESET           Hardware Reset
-      7   A0              Data/Command Select (1-data, 0-command)
-      8   SDA             Serial Data
-      9   SCK             Serial Clock
-     10   CS              Chip Select
-     11   SCK   --------+
-     12   MISO          | SD-Card slot
-     13   MOSI          |
-     14   CS    --------+
-     15   LED+
-     16   LED-
-
- **************************************************************************/
  /* Private macro -------------------------------------------------------------*/
 #define LCD_RST(x) ((x)? (LL_GPIO_SetOutputPin(LCD_RESET_GPIO_Port, LCD_RESET_Pin)) : (LL_GPIO_ResetOutputPin(LCD_RESET_GPIO_Port, LCD_RESET_Pin)));  
 #define LCD_DC(x) ((x)? (LL_GPIO_SetOutputPin(LCD_A0_GPIO_Port, LCD_A0_Pin)) : (LL_GPIO_ResetOutputPin(LCD_A0_GPIO_Port, LCD_A0_Pin)));  
 #define LCD_CS(x) ((x)? (LL_GPIO_SetOutputPin(LCD_CS_GPIO_Port, LCD_CS_Pin)) : (LL_GPIO_ResetOutputPin(LCD_CS_GPIO_Port, LCD_CS_Pin)));  
 
 
-#define CLR_RS  TFT_C_D(0);
-#define SET_RS  TFT_C_D(1);
+#define CLR_RS  LCD_DC(0);
+#define SET_RS  LCD_DC(1);
 #define CLR_SDA TFT_SDA(0);
 #define SET_SDA TFT_SDA(1);
 #define CLR_SCL TFT_SCK(0);
 #define SET_SCL TFT_SCK(1);
-#define CLR_CS  TFT_CS(0);
-#define SET_CS  TFT_CS(1);
-#define CLR_RES TFT_RESET(0);
-#define SET_RES TFT_RESET(1);
+#define CLR_CS  LCD_CS(0);
+#define SET_CS  LCD_CS(1);
+#define CLR_RES LCD_RST(0);
+#define SET_RES LCD_RST(1);
 
 /* Private defines -----------------------------------------------------------*/
 #define ST7735_PANEL_WIDTH  96 //ширина экрана
-#define ST7735_PANEL_HEIGHT 64 //длина
+#define ST7735_PANEL_HEIGHT 72 //длина
 
 // System control functions
 #define ST7735_NOP       (0x0)
@@ -153,7 +111,7 @@ void LCD_ShowJam(void);
 #define ST7735_EXTCTRL   (0xF0)
 #define ST7735_VCOM4L    (0xFF)
 
-// Color definitions
+// 32 битные цвета
 #define BLACK     0x0000
 #define BLUE      0x001F
 #define RED       0xF800
@@ -176,6 +134,7 @@ void LCD_ShowJam(void);
 #define LGRAYBLUE   0XA651 
 #define LBBLUE      0X2B12 
 
+//16 битные цвета
 #define black 0x00
 #define blue  0x1F
 #define green 0x7E
@@ -188,14 +147,14 @@ void LCD_ShowJam(void);
 
 /* Private constants --------------------------------------------------------*/
 extern const unsigned char * GlobalFont;
-extern unsigned int Paint_Color;
-extern unsigned int Back_Color;
+extern uint32_t Paint_Color;
+extern uint32_t Back_Color;
 
 extern const unsigned char Arial_15x17[224*34];
 extern const unsigned char Arial_22x23[224*69];	  	// 14pt
-extern const unsigned char Arial_26x28[224*112];
+/*extern const unsigned char Arial_26x28[224*112];
 extern const unsigned char Arial_31x33[224*132];	// 20pt
 extern const unsigned char Arial_36x37[224*185];	// 24pt
-extern const unsigned char Arial_44x46[224*276];  	// 30pt
+extern const unsigned char Arial_44x46[224*276];  	// 30pt*/
 
 #endif
