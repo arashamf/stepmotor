@@ -22,6 +22,7 @@ static void lcdFillRGB(uint16_t color);
 static uint16_t lcdGetWidth (void);
 static uint16_t lcdGetHeight (void);
 static uint16_t FindColor (uint8_t color);
+static void lcdDrawPixel(uint16_t x, uint16_t y, uint16_t color);
 
 //************************************************************************//
 #define BUFF_SIZE (ST7735_PANEL_WIDTH*ST7735_PANEL_HEIGHT)
@@ -271,14 +272,6 @@ void st7735SetAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
 }
 
 //************************************************************************//
-void lcdDrawPixel(uint16_t x, uint16_t y, uint16_t color)
-{
-	x=y*ST7735_PANEL_WIDTH+x;
-	Lcd_buffer[x]= (uint8_t) color;	
-	
-}
-
-//************************************************************************//
 void LCD_Refresh(void)
 {  	
 	int x, y;
@@ -302,6 +295,13 @@ void LCD_SetFont(const uint8_t * font, uint32_t color)
 	Paint_Color = color;
 }
 
+//************************************************************************//
+void lcdDrawPixel(uint16_t x, uint16_t y, uint16_t color)
+{
+	x = y*ST7735_PANEL_WIDTH+x;
+	Lcd_buffer[x] = (uint8_t)color;	
+	
+}
 
 //************************************************************************//
 uint32_t LCD_FastShowChar(uint32_t x, uint32_t y, uint8_t num)
@@ -312,7 +312,7 @@ uint32_t LCD_FastShowChar(uint32_t x, uint32_t y, uint8_t num)
 	uint32_t tmpMaxWidth = 0, maxWidth = 0;
 	uint32_t symbolHeight, symbolLeghth, symbolByteWidth;
 	 
-   if(x>ST7735_PANEL_WIDTH||y>ST7735_PANEL_HEIGHT)
+   if ((x>ST7735_PANEL_WIDTH) || (y>ST7735_PANEL_HEIGHT))
 	 {	return 0;	}
 
 	if (num == ' ') // special case - " " symbol doesn't have any width
@@ -327,31 +327,55 @@ uint32_t LCD_FastShowChar(uint32_t x, uint32_t y, uint8_t num)
 	symbolLeghth = (GlobalFont[0])*(GlobalFont[2]);
 	//symbolLeghth =  GlobalFont[3];
 
- 	for(dy=0;dy<symbolHeight;dy++) 
+ 	for(dy=0; dy<symbolHeight; dy++) 
 	{
 		tmp4=y+dy;
-		for(i=0;i<symbolByteWidth;i++)
+		for(i=0; i<symbolByteWidth; i++)
 		{
 			tmp2=i*8;
 			tmp3=x+i*8;
 			tmp = GlobalFont[num*symbolLeghth + dy*symbolByteWidth+i]; 
 			
 			if (tmp&0x80) 
-			{lcdDrawPixel(tmp3+0,tmp4,Paint_Color); tmpMaxWidth = tmp2+1; }
+			{
+				lcdDrawPixel(tmp3+0, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+1; 
+			}
 			if (tmp&0x40) 
-			{lcdDrawPixel(tmp3+1,tmp4,Paint_Color); tmpMaxWidth = tmp2+2; }
+			{
+				lcdDrawPixel(tmp3+1, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+2; 
+			}
 			if (tmp&0x20) 
-			{lcdDrawPixel(tmp3+2,tmp4,Paint_Color); tmpMaxWidth = tmp2+3; }
+			{
+				lcdDrawPixel(tmp3+2, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+3; 
+			}
 			if (tmp&0x10) 
-			{lcdDrawPixel(tmp3+3,tmp4,Paint_Color); tmpMaxWidth = tmp2+4; }
+			{
+				lcdDrawPixel(tmp3+3, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+4; 
+			}
 			if (tmp&0x08) 
-			{lcdDrawPixel(tmp3+4,tmp4,Paint_Color); tmpMaxWidth = tmp2+5; }
+			{	
+				lcdDrawPixel(tmp3+4, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+5; 
+			}
 			if (tmp&0x04) 
-			{lcdDrawPixel(tmp3+5,tmp4,Paint_Color); tmpMaxWidth = tmp2+6; }
+			{
+				lcdDrawPixel(tmp3+5, tmp4, Paint_Color);
+				tmpMaxWidth = tmp2+6; 
+			}
 			if (tmp&0x02) 
-			{lcdDrawPixel(tmp3+6,tmp4,Paint_Color); tmpMaxWidth = tmp2+7; }
+			{
+				lcdDrawPixel(tmp3+6, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+7; 
+			}
 			if (tmp&0x01) 
-			{lcdDrawPixel(tmp3+7,tmp4,Paint_Color); tmpMaxWidth = tmp2+8; }
+			{
+				lcdDrawPixel(tmp3+7, tmp4, Paint_Color); 
+				tmpMaxWidth = tmp2+8; 
+			}
 
 			if (tmpMaxWidth > maxWidth) 
 			{ maxWidth = tmpMaxWidth; }
@@ -369,7 +393,7 @@ uint32_t LCD_GetCharWidth(uint32_t y, uint8_t num)
 	uint32_t tmpMaxWidth = 0, maxWidth = 0;
 	uint32_t symbolHeight, symbolLeghth, symbolByteWidth;
 	 
-	if(y>ST7735_PANEL_HEIGHT)
+	if(y > ST7735_PANEL_HEIGHT)
 	{	return 0;	}
 
 	if (num == ' ') 	// special case - " " symbol doesn't have any width
@@ -416,12 +440,15 @@ uint32_t LCD_GetCharWidth(uint32_t y, uint8_t num)
 }
 
 //************************************************************************//
-void LCD_ShowString(uint16_t x, uint16_t y, char *p)
+void LCD_ShowString (uint16_t x, uint16_t y, char *p)
 {         
 	while(*p!='\0')	
 	{       
 		if(x>=ST7735_PANEL_WIDTH)
-		{ x=0; y=y+GlobalFont[2]-1; }
+		{ 
+			x=0; 
+			y = y + GlobalFont[2]-1; 
+		}
 		if(y>=ST7735_PANEL_HEIGHT)
 		{	y=x=0;	}
 		x+=LCD_FastShowChar(x,y,*p);

@@ -14,7 +14,6 @@
 void lcdInit(void);
 void ClearLcdMemory(void);
 void st7735SetAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
-void lcdDrawPixel(uint16_t x, uint16_t y, uint16_t color);
 void LCD_Refresh(void);
 void LCD_SetFont(const uint8_t * font, uint32_t color);
 uint32_t LCD_FastShowChar(uint32_t x, uint32_t y, uint8_t num);
@@ -37,7 +36,7 @@ void LcdDrawMgGraph(int *buf, int low, int high);
 #define LCD_CS(x) ((x)? (LL_GPIO_SetOutputPin(LCD_CS_GPIO_Port, LCD_CS_Pin)) : (LL_GPIO_ResetOutputPin(LCD_CS_GPIO_Port, LCD_CS_Pin)));  
 
 
-#define CLR_RS  LCD_DC(0);
+/*#define CLR_RS  LCD_DC(0);
 #define SET_RS  LCD_DC(1);
 #define CLR_SDA TFT_SDA(0);
 #define SET_SDA TFT_SDA(1);
@@ -46,11 +45,11 @@ void LcdDrawMgGraph(int *buf, int low, int high);
 #define CLR_CS  LCD_CS(0);
 #define SET_CS  LCD_CS(1);
 #define CLR_RES LCD_RST(0);
-#define SET_RES LCD_RST(1);
+#define SET_RES LCD_RST(1);*/
 
 /* Private defines -----------------------------------------------------------*/
-#define ST7735_PANEL_WIDTH  96 //ширина экрана
-#define ST7735_PANEL_HEIGHT 72 //длина
+#define ST7735_PANEL_WIDTH  128 //ширина экрана
+#define ST7735_PANEL_HEIGHT 32 //длина
 
 // System control functions
 #define NOP      				(0x00)
@@ -87,25 +86,25 @@ void LcdDrawMgGraph(int *buf, int low, int high);
 #define RDID3     			(0xDC)
 
 // Panel control functions
-#define FRMCTR1   (0xB1)
-#define FRMCTR2   (0xB2)
-#define FRMCTR3   (0xB3)
-#define INVCTR    (0xB4)
-#define DISSET5   (0xB6)
-#define SOURCE		(0xB7)
-#define PWCTR1    (0xC0)
-#define PWCTR2    (0xC1)
-#define PWCTR3    (0xC2)
-#define PWCTR4    (0xC3)
-#define PWCTR5    (0xC4)
-#define VMCTR1    (0xC5)
-#define VMOFCTR   (0xC7)
-#define WRID2     (0xD1)
-#define WRID3     (0xD2)
-#define PWCTR6    (0xFC)
-#define NVFCTR1   (0xD9)
-#define NVFCTR2   (0xDE)
-#define NVFCTR3   (0xDF)
+#define FRMCTR1  		(0xB1)
+#define FRMCTR2   	(0xB2)
+#define FRMCTR3   	(0xB3)
+#define INVCTR    	(0xB4)
+#define DISSET5   	(0xB6)
+#define SOURCE			(0xB7)
+#define PWCTR1    	(0xC0)
+#define PWCTR2   		(0xC1)
+#define PWCTR3    	(0xC2)
+#define PWCTR4    	(0xC3)
+#define PWCTR5   		(0xC4)
+#define VMCTR1   		(0xC5)
+#define VMOFCTR   	(0xC7)
+#define WRID2     	(0xD1)
+#define WRID3     	(0xD2)
+#define PWCTR6    	(0xFC)
+#define NVFCTR1   	(0xD9)
+#define NVFCTR2  		(0xDE)
+#define NVFCTR3   	(0xDF)
 
 #define GMCTRP1   	(0xE0)
 #define GMCTRN1   	(0xE1)
@@ -113,17 +112,17 @@ void LcdDrawMgGraph(int *buf, int low, int high);
 #define GAMMABIT   	(0xF2)
 #define VCOM4L    	(0xFF)
 
-// 32 битные цвета
-#define BLACK     0x0000
-#define BLUE      0x001F
-#define RED       0xF800
-#define GREEN     0x07E0
-#define CYAN      0x07FF
-#define MAGENTA   0xF81F
-#define YELLOW    0xFFE0
-#define WHITE     0xFFFF
-#define BRED      0XF81F
-#define GRED 			0XFFE0
+// 16 битные цвета
+#define BLACK     	0x0000
+#define BLUE     		0x001F
+#define RED      	 	0xF800
+#define GREEN    		0x07E0
+#define CYAN      	0x07FF
+#define MAGENTA   	0xF81F
+#define YELLOW   		0xFFE0
+#define WHITE    		0xFFFF
+#define BRED     	 	0XF81F
+#define GRED 				0XFFE0
 #define GBLUE			0X07FF
 #define BROWN 		0XBC40 
 #define BRRED 		0XFC07
@@ -136,14 +135,14 @@ void LcdDrawMgGraph(int *buf, int low, int high);
 #define LGRAYBLUE   0XA651 
 #define LBBLUE      0X2B12 
 
-//16 битные цвета
-#define black 0x00
-#define blue  0x1F
-#define green 0x7E
-#define white 0xFF
-#define red   0xF8
-#define yellow 0xFE
-#define grey 0xEE
+//8 битные цвета
+#define black 	0x00
+#define blue  	0x1F
+#define green 	0x7E
+#define white 	0xFF
+#define red   	0xF8
+#define yellow 	0xFE
+#define grey 	0xEE
 
 
 
